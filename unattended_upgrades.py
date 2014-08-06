@@ -106,10 +106,10 @@ try:
     ]
     config_filename = '/etc/apt/apt.conf.d/10periodic'
     for cvr in config_variable_regexes:
-        val = int(get_config_value(config_filename, cvr))
+        val = get_config_value(config_filename, cvr)
+        val = None if val is None else int(val)
         if not val:
-            print("CRITICAL - 'unattended-upgrades is not configured to run properly.\n"\
-                  "In {}: {} is set to {}".format(config_filename, cvr, val))
+            print("CRITICAL - In {}: {} is set to {}".format(config_filename, cvr, val))
             sys.exit(CRITICAL)
         if cvr == config_variable_regexes[0]:
             unattended_upgrade_period = val
