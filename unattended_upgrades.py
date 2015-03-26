@@ -71,13 +71,7 @@ try:
         print("CRITICAL - Package 'unattended-upgrades' not installed")
         sys.exit(CRITICAL)
 
-    # --- Check that unattended-upgrades is configured for package list updates.
-    # '^\s*' Ensures that the line isn't commented out.
-    expected_content_regex = r'^\s*' + re.escape(r'APT::Periodic::Update-Package-Lists "1";')
-    config_filename = '/etc/apt/apt.conf.d/10periodic'
-    if not config_file_contains(config_filename, expected_content_regex):
-        print("CRITICAL - 'unattended-upgrades' is not configured to update package lists")
-        sys.exit(CRITICAL)
+    # --- /etc/apt/apt.conf.d/50unattended-upgrades checks
 
     # --- Check that unattended-upgrades is configured to install security updates.
     # '^\s*' Ensures that the line isn't commented out
@@ -96,6 +90,11 @@ try:
         sys.exit(WARNING)
 
     # --- Check that unattended-upgrades is configured to run.
+    # This could be set up in "/etc/apt/apt.conf.d/10periodic" (deprecated) or in
+    #    "/etc/apt/apt.conf.d/20unattended-upgrades".
+    config_filename = '/etc/apt/apt.conf.d/20auto-upgrades'
+    if not os.path.isfile(config_filename):
+        config_filename = '/etc/apt/apt.conf.d/10periodic'
     config_variable_regexes = [
         # Make sure this one is first
         re.escape(r'APT::Periodic::Unattended-Upgrade "') + r'(\d+)' + re.escape(r'";'),
@@ -104,7 +103,6 @@ try:
         r'APT::Periodic::Download-Upgradeable-Packages "(\d+)";',
         r'APT::Periodic::AutocleanInterval "(\d+)";',
     ]
-    config_filename = '/etc/apt/apt.conf.d/10periodic'
     for cvr in config_variable_regexes:
         val = get_config_value(config_filename, cvr)
         val = None if val is None else int(val)
